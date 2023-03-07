@@ -1,0 +1,7 @@
+### Variables
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MTZkODI4NTJlNDM1MTkzNDhlYjkwYTciLCJpYXQiOjE2MzU4ODQ3MDcsImV4cCI6MTYzNjI0NDcwN30.pt6FW8DxIoIrwvzD_9YPwea7mDpMi2XGhSSo1P_-HAc
+
+### Get a client points
+GET  http://localhost:8081/api/user/points
+content-type: application/json
+x-auth-token: {{token}}

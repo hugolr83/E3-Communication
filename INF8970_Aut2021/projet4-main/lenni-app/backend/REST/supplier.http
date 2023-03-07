@@ -1,0 +1,11 @@
+### Variables
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+
+// @user ={"firstname": 'Jean', "lastname": 'Pascal', "funds": 5, "lastConnection": '1995-12-17T03:24:00', "paymentInfo": { "paymentMode": { "creditCard": true, "bankAccount": false }, "creditCard": { "cardHolderName": 'jepa', "cardNumber": 253647589500, "expirationDate": '1995-12-17T03:24:00', "ccv": 869 }, "bankAccount": { "bankInstitution": 'SCOTIA bank', "bankNumber": 26367374, "accountNumber": 36744849 } }, "userInfo": { "email": 'jeanpascal@hotmail.com', "username": 'jepa', "password": 'jepa123', "role": 'client', "registrationDate": '1995-06-17T03:24:00' }} 
+@supplier = { "email": "adassdfsdfsdfs555n@codaaasdfasaemine.com","username": "popouasdfsdfsd", "password": "teasdfstasdf", "firstname": "adasdasdffmin", "lastname": "adasdfmiasdfn", "role": "USAGER", "funds": "0"}
+
+### Register supplier given their email and password, returns the token upon successful registration
+POST  http://localhost:8081/api/supplier/add
+content-type: application/json
+
+{{supplier}}

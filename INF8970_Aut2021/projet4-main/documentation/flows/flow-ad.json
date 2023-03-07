@@ -1,0 +1,425 @@
+{
+    "description": "Ads",
+    "states": [
+      {
+        "name": "Trigger",
+        "type": "trigger",
+        "transitions": [
+          {
+            "event": "incomingMessage"
+          },
+          {
+            "event": "incomingCall"
+          },
+          {
+            "event": "incomingConversationMessage"
+          },
+          {
+            "next": "setTokenRestApi",
+            "event": "incomingRequest"
+          },
+          {
+            "next": "setTokenSubflow",
+            "event": "incomingParent"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 80,
+            "y": -230
+          }
+        }
+      },
+      {
+        "name": "choice",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "splitChoice",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -20,
+            "y": 270
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "Veuillez envoyer 1 si vous souhaitez publier une annonce",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "splitChoice",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "next": "sendWrongChoice",
+            "event": "noMatch"
+          },
+          {
+            "next": "fetchSuppliers",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to 1",
+                "arguments": [
+                  "{{widgets.choice.inbound.Body}}"
+                ],
+                "type": "equal_to",
+                "value": "1"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.choice.inbound.Body}}",
+          "offset": {
+            "x": -20,
+            "y": 490
+          }
+        }
+      },
+      {
+        "name": "sendWrongChoice",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "choice",
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -360,
+            "y": 360
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Mauvais choix, veuillez réessayer"
+        }
+      },
+      {
+        "name": "toPoints",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "createAd",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 670,
+            "y": 990
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "Entrez le nombre de points a recevoir",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "fromPoints",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "selectSupplierTo",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -20,
+            "y": 1030
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "Entrez le nombre de points a donner",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "createAd",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "split_2",
+            "event": "success"
+          },
+          {
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "default",
+          "offset": {
+            "x": -120,
+            "y": 1340
+          },
+          "parameters": [
+            {
+              "value": "{{trigger.parent.parameters.token}}",
+              "key": "token"
+            },
+            {
+              "value": "{{widgets.fromPoints.inbound.Body}}",
+              "key": "fromPoints"
+            },
+            {
+              "value": "{{widgets.toPoints.inbound.Body}}",
+              "key": "toPoints"
+            },
+            {
+              "value": "{{widgets.selectSupplierFrom.inbound.Body}}",
+              "key": "fromSupplier"
+            },
+            {
+              "value": "{{widgets.selectSupplierTo.inbound.Body}}",
+              "key": "toSupplier"
+            },
+            {
+              "value": "{{widgets.fetchSuppliers.parsed}}",
+              "key": "suppliers"
+            }
+          ],
+          "url": "https://snobbish-rat-3093.twil.io/create-ad"
+        }
+      },
+      {
+        "name": "split_2",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "next": "sendOK",
+            "event": "noMatch"
+          },
+          {
+            "next": "sendWaiting",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to 3",
+                "arguments": [
+                  "{{trigger.parent.parameters.method}}"
+                ],
+                "type": "equal_to",
+                "value": "3"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{trigger.parent.parameters.method}}",
+          "offset": {
+            "x": 300,
+            "y": 1320
+          }
+        }
+      },
+      {
+        "name": "sendWaiting",
+        "type": "send-message",
+        "transitions": [
+          {
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 330,
+            "y": 1640
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Annonce ajoutée. En attente de validation en magasin"
+        }
+      },
+      {
+        "name": "sendOK",
+        "type": "send-message",
+        "transitions": [
+          {
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -90,
+            "y": 1640
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Annonce ajoutée. Aucune autre action nécessaire."
+        }
+      },
+      {
+        "name": "fetchSuppliers",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "selectSupplierFrom",
+            "event": "success"
+          },
+          {
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "default",
+          "environment_sid": "",
+          "offset": {
+            "x": 380,
+            "y": 560
+          },
+          "function_sid": "",
+          "parameters": [
+            {
+              "value": "{{flow.variables.token}}",
+              "key": "token"
+            }
+          ],
+          "url": "https://snobbish-rat-3093.twil.io/suppliers"
+        }
+      },
+      {
+        "name": "selectSupplierFrom",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "fromPoints",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -370,
+            "y": 1040
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "Choisir le fournisseur d'origine en répondant au numéro correspondant :\n\n\n{{widgets.fetchSuppliers.parsed.suppliers}}",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "selectSupplierTo",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "toPoints",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "timeout"
+          },
+          {
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 320,
+            "y": 1000
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "Choisir le fournisseur de destination en répondant au numéro correspondant :\n\n\n{{widgets.fetchSuppliers.parsed.suppliers}}",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "setTokenRestApi",
+        "type": "set-variables",
+        "transitions": [
+          {
+            "next": "choice",
+            "event": "next"
+          }
+        ],
+        "properties": {
+          "variables": [
+            {
+              "value": "{{flow.data.token}}",
+              "key": "token"
+            }
+          ],
+          "offset": {
+            "x": -200,
+            "y": 0
+          }
+        }
+      },
+      {
+        "name": "setTokenSubflow",
+        "type": "set-variables",
+        "transitions": [
+          {
+            "next": "choice",
+            "event": "next"
+          }
+        ],
+        "properties": {
+          "variables": [
+            {
+              "value": "{{trigger.parent.parameters.token}}",
+              "key": "token"
+            }
+          ],
+          "offset": {
+            "x": 170,
+            "y": 20
+          }
+        }
+      }
+    ],
+    "initial_state": "Trigger",
+    "flags": {
+      "allow_concurrent_calls": true
+    }
+  }

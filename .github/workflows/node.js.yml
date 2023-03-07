@@ -1,0 +1,53 @@
+
+name: lenni-app CI
+
+on:
+  push:
+    branches: [ "main"]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CACHE_IMAGE: ../docker-compose-ci-cache
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+    
+defaults:
+  run:
+    working-directory: INF8970_Aut2021/projet4-main/lenni-app
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with: 
+          node-version: "16.x"
+        
+      - name: Set the buildkit caching options
+        run: |
+          export DOCKER_BUILDKIT=1
+          export COMPOSE_DOCKER_CLI_BUILD=1
+ 
+      - name: Install Node & dependencies
+        run: |
+          cd auth-server
+          sudo npm install --unsafe-perm
+          npm install uuid@7.0.3 --force
+
+      - name: Running tests
+        env:
+          TWILIO_ACCOUNT_SID: AC63XXXXXXXXXXXXXXXXXX
+          TWILIO_AUTH_TOKEN: 57XXXXXXXXXXXXXXXXXXXXXXX
+          SENDGRID_API_KEY: SG.teeeest
+        run: |
+          cd auth-server
+          npm run testc
+                
+      - name: Run docker-compose
+        run: |
+          docker-compose build --build-arg BUILDKIT_INLINE_CACHE=1
+          docker-compose up -d

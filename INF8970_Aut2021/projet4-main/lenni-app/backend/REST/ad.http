@@ -1,0 +1,8 @@
+### Variables
+# @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MTg1YzE1ZDdkMDA2OGNlYjM5ZmRjMTkiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTYzNjU5NDQ2MywiZXhwIjoxNjM2OTU0NDYzfQ.m_ONfvobWwrNJJs3NBA-YZFDHcmFTAEHkOMIX1J7Ep4
+ @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MTg1YzFjYTdkMDA2OGNlYjM5ZmRjMjEiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTYzNjU5NDg0OSwiZXhwIjoxNjM2OTU0ODQ5fQ.DOf-zuNuYi5ETjajvdDzX7XfpRCdYWxmVctqAw9FMj0
+### Get ads
+GET  http://localhost:8081/api/clientAd/all
+content-type: application/json
+x-auth-token: {{token}}
+

@@ -1,0 +1,436 @@
+{
+    "description": "A New Flow",
+    "states": [
+      {
+        "name": "Trigger",
+        "type": "trigger",
+        "transitions": [
+          {
+            "next": "AuthPassword",
+            "event": "incomingMessage"
+          },
+          {
+            "event": "incomingCall"
+          },
+          {
+            "event": "incomingConversationMessage"
+          },
+          {
+            "next": "sendOK",
+            "event": "incomingRequest"
+          },
+          {
+            "event": "incomingParent"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -220,
+            "y": 0
+          }
+        }
+      },
+      {
+        "name": "sendOK",
+        "type": "send-message",
+        "transitions": [
+          {
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 500,
+            "y": 210
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Votre annonce a été validée!"
+        }
+      },
+      {
+        "name": "AuthPassword",
+        "type": "run-subflow",
+        "transitions": [
+          {
+            "next": "CheckStatus",
+            "event": "completed"
+          },
+          {
+            "next": "send_message_1",
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "flow_sid": "FW235564de53ada7c2c2c2b7a28bb9aa5a",
+          "flow_revision": "LatestPublished",
+          "offset": {
+            "x": -610,
+            "y": 200
+          },
+          "parameters": []
+        }
+      },
+      {
+        "name": "CheckStatus",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "event": "noMatch"
+          },
+          {
+            "next": "getAuthMethod",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to success",
+                "arguments": [
+                  "{{widgets.AuthPassword.status}}"
+                ],
+                "type": "equal_to",
+                "value": "success"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.AuthPassword.status}}",
+          "offset": {
+            "x": -270,
+            "y": 190
+          }
+        }
+      },
+      {
+        "name": "TOTP",
+        "type": "run-subflow",
+        "transitions": [
+          {
+            "next": "checkStatusTOTP",
+            "event": "completed"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "flow_sid": "FW97ed91a8bffc741fd765524a7714c3bd",
+          "flow_revision": "LatestPublished",
+          "offset": {
+            "x": -280,
+            "y": 700
+          },
+          "parameters": [
+            {
+              "value": "{{widgets.AuthPassword.token}}",
+              "key": "token"
+            },
+            {
+              "value": "{{widgets.AuthPassword.username}}",
+              "key": "username"
+            }
+          ]
+        }
+      },
+      {
+        "name": "getAuthMethod",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "splitAuthMethod",
+            "event": "success"
+          },
+          {
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "default",
+          "offset": {
+            "x": 140,
+            "y": 190
+          },
+          "parameters": [
+            {
+              "value": "{{widgets.AuthPassword.token}}",
+              "key": "token"
+            }
+          ],
+          "url": "https://snobbish-rat-3093.twil.io/choice"
+        }
+      },
+      {
+        "name": "splitAuthMethod",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "event": "noMatch"
+          },
+          {
+            "next": "SecurityQuestion",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to 0",
+                "arguments": [
+                  "{{widgets.getAuthMethod.parsed.method}}"
+                ],
+                "type": "equal_to",
+                "value": "0"
+              }
+            ]
+          },
+          {
+            "next": "TOTP",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to 1",
+                "arguments": [
+                  "{{widgets.getAuthMethod.parsed.method}}"
+                ],
+                "type": "equal_to",
+                "value": "1"
+              }
+            ]
+          },
+          {
+            "next": "OTP",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to 2",
+                "arguments": [
+                  "{{widgets.getAuthMethod.parsed.method}}"
+                ],
+                "type": "equal_to",
+                "value": "2"
+              }
+            ]
+          },
+          {
+            "next": "Ads",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to 3",
+                "arguments": [
+                  "{{widgets.getAuthMethod.parsed.method}}"
+                ],
+                "type": "equal_to",
+                "value": "3"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.getAuthMethod.parsed.method}}",
+          "offset": {
+            "x": -360,
+            "y": 410
+          }
+        }
+      },
+      {
+        "name": "Ads",
+        "type": "run-subflow",
+        "transitions": [
+          {
+            "event": "completed"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "flow_sid": "FWd73beea1396e9d988c83e2c8a2941b5e",
+          "flow_revision": "LatestPublished",
+          "offset": {
+            "x": 490,
+            "y": 680
+          },
+          "parameters": [
+            {
+              "value": "{{widgets.getAuthMethod.parsed.method}}",
+              "key": "method"
+            },
+            {
+              "value": "{{widgets.AuthPassword.token}}",
+              "key": "token"
+            }
+          ]
+        }
+      },
+      {
+        "name": "securityQuestion",
+        "type": "make-http-request",
+        "transitions": [
+          {
+            "event": "success"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -1150,
+            "y": 520
+          },
+          "method": "POST",
+          "content_type": "application/json;charset=utf-8",
+          "body": "{\"token\": \"{{widgets.AuthPassword.token}}\"}",
+          "url": "https://bada-132-207-3-194.ngrok.io/nodeserver/authserver/twilio"
+        }
+      },
+      {
+        "name": "OTP",
+        "type": "run-subflow",
+        "transitions": [
+          {
+            "next": "checkStatusOTP",
+            "event": "completed"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "flow_sid": "FW30fbb5a3bbf4f682b58380e99420bf49",
+          "flow_revision": "LatestPublished",
+          "offset": {
+            "x": 90,
+            "y": 680
+          },
+          "parameters": [
+            {
+              "value": "{{widgets.AuthPassword.token}}",
+              "key": "token"
+            },
+            {
+              "value": "{{widgets.AuthPassword.username}}",
+              "key": "username"
+            }
+          ]
+        }
+      },
+      {
+        "name": "checkStatusOTP",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "event": "noMatch"
+          },
+          {
+            "next": "Ads",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to success",
+                "arguments": [
+                  "{{widgets.OTP.status}}"
+                ],
+                "type": "equal_to",
+                "value": "success"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.OTP.status}}",
+          "offset": {
+            "x": 100,
+            "y": 910
+          }
+        }
+      },
+      {
+        "name": "checkStatusTOTP",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "event": "noMatch"
+          },
+          {
+            "next": "Ads",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value equal_to success",
+                "arguments": [
+                  "{{widgets.TOTP.status}}"
+                ],
+                "type": "equal_to",
+                "value": "success"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.TOTP.status}}",
+          "offset": {
+            "x": -320,
+            "y": 920
+          }
+        }
+      },
+      {
+        "name": "SecurityQuestion",
+        "type": "run-function",
+        "transitions": [
+          {
+            "event": "success"
+          },
+          {
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "default",
+          "offset": {
+            "x": -710,
+            "y": 670
+          },
+          "parameters": [
+            {
+              "value": "{{widgets.AuthPassword.token}}",
+              "key": "token"
+            }
+          ],
+          "url": "https://snobbish-rat-3093.twil.io/securityQuestion"
+        }
+      },
+      {
+        "name": "send_message_1",
+        "type": "send-message",
+        "transitions": [
+          {
+            "event": "sent"
+          },
+          {
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -1286,
+            "y": 152
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Auth failed"
+        }
+      }
+    ],
+    "initial_state": "Trigger",
+    "flags": {
+      "allow_concurrent_calls": true
+    }
+  }

@@ -1,0 +1,4 @@
+{
+    "jwtSecret": "thisIsTheSecretToken",
+    "jwtExpiration": "1d"
+  }

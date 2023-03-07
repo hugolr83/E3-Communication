@@ -1,0 +1,270 @@
+{
+    "description": "A New Flow",
+    "states": [
+      {
+        "name": "Trigger",
+        "type": "trigger",
+        "transitions": [
+          {
+            "event": "incomingMessage"
+          },
+          {
+            "event": "incomingCall"
+          },
+          {
+            "event": "incomingConversationMessage"
+          },
+          {
+            "event": "incomingRequest"
+          },
+          {
+            "next": "fetchUserID",
+            "event": "incomingParent"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -70,
+            "y": 10
+          }
+        }
+      },
+      {
+        "name": "fetchUserID",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "otpInput",
+            "event": "success"
+          },
+          {
+            "next": "SendFail",
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "service_sid": "default",
+          "offset": {
+            "x": -340,
+            "y": 260
+          },
+          "parameters": [
+            {
+              "value": "{{trigger.parent.parameters.token}}",
+              "key": "token"
+            }
+          ],
+          "url": "https://snobbish-rat-3093.twil.io/fetchUserID"
+        }
+      },
+      {
+        "name": "otpInput",
+        "type": "send-and-wait-for-reply",
+        "transitions": [
+          {
+            "next": "getUserOTP",
+            "event": "incomingMessage"
+          },
+          {
+            "next": "SendFail",
+            "event": "timeout"
+          },
+          {
+            "next": "SendFail",
+            "event": "deliveryFailure"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 10,
+            "y": 220
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "body": "Bonjour {{trigger.parent.parameters.username}}, veuillez rentrer votre code à usage unique.",
+          "timeout": "3600"
+        }
+      },
+      {
+        "name": "SendFail",
+        "type": "set-variables",
+        "transitions": [
+          {
+            "event": "next"
+          }
+        ],
+        "properties": {
+          "variables": [
+            {
+              "value": "fail",
+              "key": "status"
+            }
+          ],
+          "offset": {
+            "x": -510,
+            "y": 580
+          }
+        }
+      },
+      {
+        "name": "getUserOTP",
+        "type": "run-function",
+        "transitions": [
+          {
+            "next": "checkStatusOTP",
+            "event": "success"
+          },
+          {
+            "next": "SendFail",
+            "event": "fail"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 350,
+            "y": 260
+          },
+          "parameters": [
+            {
+              "value": "{{ widgets.fetchUserID.body}}",
+              "key": "userInfoId"
+            },
+            {
+              "value": "{{widgets.otpInput.inbound.Body}}",
+              "key": "code"
+            },
+            {
+              "value": "{{trigger.parent.parameters.token}}",
+              "key": "token"
+            }
+          ],
+          "url": "https://snobbish-rat-3093.twil.io/getUserOTP"
+        }
+      },
+      {
+        "name": "SetSuccess",
+        "type": "set-variables",
+        "transitions": [
+          {
+            "event": "next"
+          }
+        ],
+        "properties": {
+          "variables": [
+            {
+              "value": "success",
+              "key": "status"
+            },
+            {
+              "value": "{{widgets.getUserOTP.body}}",
+              "key": "otp"
+            }
+          ],
+          "offset": {
+            "x": 660,
+            "y": 780
+          }
+        }
+      },
+      {
+        "name": "checkStatusOTP",
+        "type": "split-based-on",
+        "transitions": [
+          {
+            "next": "authFail",
+            "event": "noMatch"
+          },
+          {
+            "next": "authSuccess",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value not_equal_to 200",
+                "arguments": [
+                  "{{widgets.getUserOTP.body}}"
+                ],
+                "type": "not_equal_to",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "next": "authFail",
+            "event": "match",
+            "conditions": [
+              {
+                "friendly_name": "If value not_equal_to 200",
+                "arguments": [
+                  "{{widgets.getUserOTP.body}}"
+                ],
+                "type": "equal_to",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "properties": {
+          "input": "{{widgets.getUserOTP.body}}",
+          "offset": {
+            "x": 110,
+            "y": 540
+          }
+        }
+      },
+      {
+        "name": "authSuccess",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "SetSuccess",
+            "event": "sent"
+          },
+          {
+            "next": "SendFail",
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": 230,
+            "y": 780
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "Connexion réussie"
+        }
+      },
+      {
+        "name": "authFail",
+        "type": "send-message",
+        "transitions": [
+          {
+            "next": "SendFail",
+            "event": "sent"
+          },
+          {
+            "next": "SendFail",
+            "event": "failed"
+          }
+        ],
+        "properties": {
+          "offset": {
+            "x": -130,
+            "y": 780
+          },
+          "service": "{{trigger.message.InstanceSid}}",
+          "channel": "{{trigger.message.ChannelSid}}",
+          "from": "{{flow.channel.address}}",
+          "to": "{{contact.channel.address}}",
+          "body": "L'authentification a échoué"
+        }
+      }
+    ],
+    "initial_state": "Trigger",
+    "flags": {
+      "allow_concurrent_calls": true
+    }
+  }
